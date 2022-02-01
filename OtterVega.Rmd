@@ -3,6 +3,50 @@ title: "Otter - Vega"
 author: "Markus Fjellstad Israelsen"
 date: "22 12 2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
+Load library
+```{r Library, echo = FALSE}
+
+library(dplyr)
+library(rgdal)
+library(raster)
+library(rgeos)
+library(spatial)
+library(maptools)
+library(readxl)
+library(writexl)
+
+```
+
+Load data
+```{r Datasets}
+
+coastLine = terra::vect("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/R-mappe - Kystkontur/selectedCoastline/SelectedCoastlineLength.shp")
+plot(coastLine)
+
+sum(coastLine$length)/1000
+
+otterPointsRaw = read_xlsx("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/RawOterVega2019-2020.xlsx")
+otterPoints = otterPointsRaw %>% select(Dato, Observator, Område, Waypoint, `Aldersestimat tegn`, `x-koordinat`, `y-koordinat`, GenlabID, IndividID, Sex)
+otterPoints = otterPoints %>% rename(Date = Dato, Observer = Observator, Area = Område, AgeEst = 'Aldersestimat tegn', x = 'x-koordinat', y = 'y-koordinat')
+
+otterPointsXY = data.frame(x = as.numeric(otterPoints$x), y = as.numeric(otterPoints$y))
+otterPointsSP = SpatialPoints(cbind(otterPointsXY$x, otterPointsXY$y), CRS("+proj=longlat +datum=WGS84"))
+otterPointsSP = spTransform(otterPointsSP, CRS("+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs"))
+
+plot(coastLine)
+plot(otterPointsSP, add = TRUE)
+
+otterPointsXY = data.frame(coordinates(otterPointsSP))
+otterPoints = otterPoints %>% mutate(UTM_X = otterPointsXY$coords.x1, UTM_Y = otterPointsXY$coords.x2)
+otterPoints = otterPoints %>% rename(UTM_X = UTM_X.coords.x1, UTM_Y = UTM_Y.coords.x2) 
+
+# Number of otters per 10km coastline
+(length(grep("2020", otterPoints$Date)) / (sum(coastLine$length) / 1000)) * 10
+(length(grep("2019", otterPoints$Date)) / (sum(coastLine$length) / 1000)) * 10
+
+```
 
