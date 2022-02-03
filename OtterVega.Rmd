@@ -24,10 +24,16 @@ library(writexl)
 Load data
 ```{r Datasets}
 
-coastLine = terra::vect("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/R-mappe - Kystkontur/selectedCoastline/SelectedCoastlineLength.shp")
-plot(coastLine)
+coastlineVega = terra::vect("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/R-mappe - Kystkontur/Coastline/coastLineVegaLength.shp")
+coastlineMudd = terra::vect("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/R-mappe - Kystkontur/Coastline/coastLineMuddværetLength.shp")
+coastlineMuddPoints = terra::vect("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/R-mappe - Kystkontur/Coastline/coastLineMuddværetPointsLength.shp")
+plot(coastlineVega)
+plot(coastlineMudd)
+plot(coastlineMuddPoints, col = "red", add = TRUE)
 
-sum(coastLine$length)/1000
+sum(coastlineVega$length)/1000
+sum(coastlineMudd$length)/1000
+sum(coastlineMuddPoints$length)/1000
 
 otterPointsRaw = read_xlsx("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/RawOterVega2019-2020.xlsx")
 otterPoints = otterPointsRaw %>% select(Dato, Observator, Område, Waypoint, `Aldersestimat tegn`, `x-koordinat`, `y-koordinat`, GenlabID, IndividID, Sex)
