@@ -18,6 +18,7 @@ library(spatial)
 library(maptools)
 library(readxl)
 library(writexl)
+library(lubridate)
 
 ```
 
@@ -31,28 +32,30 @@ plot(coastlineVega)
 plot(coastlineMudd)
 plot(coastlineMuddPoints, col = "red", add = TRUE)
 
-sum(coastlineVega$length)/1000
-sum(coastlineMudd$length)/1000
-sum(coastlineMuddPoints$length)/1000
+vegaCoastlineKM = sum(coastlineVega$length)/1000
+muddTotalCoastlineKM = sum(coastlineMudd$length)/1000
+muddCoastlineKM = sum(coastlineMuddPoints$length)/1000
 
-otterPointsRaw = read_xlsx("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/RawOterVega2019-2020.xlsx")
-otterPoints = otterPointsRaw %>% select(Dato, Observator, Område, Waypoint, `Aldersestimat tegn`, `x-koordinat`, `y-koordinat`, GenlabID, IndividID, Sex)
-otterPoints = otterPoints %>% rename(Date = Dato, Observer = Observator, Area = Område, AgeEst = 'Aldersestimat tegn', x = 'x-koordinat', y = 'y-koordinat')
+otterPointsRaw = read_xlsx("C:/Users/markus.israelsen/OneDrive - NINA/Oter/Vega/RawOterVegaMuddUTM.xlsx")
 
-otterPointsXY = data.frame(x = as.numeric(otterPoints$x), y = as.numeric(otterPoints$y))
-otterPointsSP = SpatialPoints(cbind(otterPointsXY$x, otterPointsXY$y), CRS("+proj=longlat +datum=WGS84"))
-otterPointsSP = spTransform(otterPointsSP, CRS("+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs"))
-
-plot(coastLine)
-plot(otterPointsSP, add = TRUE)
-
-otterPointsXY = data.frame(coordinates(otterPointsSP))
-otterPoints = otterPoints %>% mutate(UTM_X = otterPointsXY$coords.x1, UTM_Y = otterPointsXY$coords.x2)
-otterPoints = otterPoints %>% rename(UTM_X = UTM_X.coords.x1, UTM_Y = UTM_Y.coords.x2) 
+plot(coastlineMudd)
+plot(coastlineMuddPoints, col = "red", add = TRUE)
 
 # Number of otters per 10km coastline
-(length(grep("2020", otterPoints$Date)) / (sum(coastLine$length) / 1000)) * 10
-(length(grep("2019", otterPoints$Date)) / (sum(coastLine$length) / 1000)) * 10
+# Group by year & area
+# count the number of otter observations and divide by the length of the coastline
+otterPointsRaw = otterPointsRaw %>% mutate(Year = year(Date), Counter = 1)
+otterPointsVega = otterPointsRaw %>% filter(Year != 2018 & Area == "Vega") # Filtered out the five points in 2018
+otterPointsMudd = otterPointsRaw %>% filter(Area == "Muddværet") 
+
+opVega = otterPointsVega %>% group_by(Year) %>% summarise(Counts = sum(Counter))
+opMudd = otterPointsMudd %>% group_by(Year) %>% summarise(Counts = sum(Counter))
+
+cbind(opVega, OtterPerKM = opVega$Counts/vegaCoastlineKM, OtterPer10KM = (opVega$Counts/vegaCoastlineKM)*10)
+cbind(opMudd, OtterPerKM = opMudd$Counts/muddTotalCoastlineKM, OtterPer10KM = (opMudd$Counts/muddTotalCoastlineKM)*10)
+cbind(opMudd, OtterPerKM = opMudd$Counts/muddCoastlineKM, OtterPer10KM = (opMudd$Counts/muddCoastlineKM)*10)
+
+
 
 ```
 
